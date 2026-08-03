@@ -15,7 +15,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 day
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
-# Standard PBKDF2 Password Hashing (No bcrypt dependency issue)
+# Standard PBKDF2 Password Hashing (No passlib/bcrypt dependencies)
 def get_password_hash(password: str) -> str:
     salt = os.urandom(16)
     pwd_hash = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
