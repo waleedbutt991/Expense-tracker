@@ -1,6 +1,5 @@
-const API_URL = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost" 
-  ? "http://127.0.0.1:8000" 
-  : "/api";
+const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
+const API_BASE_URL = isLocal ? "http://127.0.0.1:8000" : "";
 
 let isLoginMode = true;
 
@@ -34,10 +33,14 @@ if (authForm) {
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
 
+    // Localhost aur Vercel Production dono ke liye correct endpoint logic
     const endpoint = isLoginMode ? '/login' : '/signup';
+    const targetUrl = isLocal 
+      ? `${API_BASE_URL}${endpoint}` 
+      : `/api${endpoint}`;
 
     try {
-      const response = await fetch(`${API_URL}${endpoint}`, {
+      const response = await fetch(targetUrl, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json'
@@ -58,8 +61,8 @@ if (authForm) {
         }
       }
     } catch (err) {
-      console.error(err);
-      alert("Network Error: Ensure backend terminal is running and email format is valid (e.g. user@domain.com)");
+      console.error("Fetch Error:", err);
+      alert("Network Error: Ensure backend terminal is running and email format is valid.");
     }
   });
 }
