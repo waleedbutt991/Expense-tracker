@@ -7,10 +7,22 @@ from datetime import date, datetime
 
 import database, models, auth
 
-# Local Database Tables Create Karna
-models.Base.metadata.create_all(bind=database.engine)
-
+# FastAPI App Setup
 app = FastAPI(title="Expense & Income Tracker API")
+
+# Root / Health Check (Vercel Test ke liye)
+@app.get("/")
+@app.get("/api")
+def root_check():
+    return {"status": "Backend is running fine on Vercel!"}
+
+# Database tables lazy initialization
+@app.on_event("startup")
+def startup_db_check():
+    try:
+        models.Base.metadata.create_all(bind=database.engine)
+    except Exception as e:
+        print("DB Connection Error during startup:", e)
 
 # CORS Middleware (Frontend Access)
 app.add_middleware(
@@ -38,9 +50,10 @@ class ExpenseCreate(BaseModel):
     item_name: str
     amount: float
 
-# --- Authentication Endpoints ---
+# --- Authentication Endpoints (Supports both /login and /api/login) ---
 
-@app.post("/signup", response_model=Token)
+@app.post("/signup")
+@app.post("/api/signup")
 def signup(user_data: UserAuth, db: Session = Depends(database.get_db)):
     db_user = db.query(models.User).filter(models.User.email == user_data.email).first()
     if db_user:
@@ -55,7 +68,8 @@ def signup(user_data: UserAuth, db: Session = Depends(database.get_db)):
     access_token = auth.create_access_token(data={"sub": new_user.email})
     return {"access_token": access_token, "token_type": "bearer"}
 
-@app.post("/login", response_model=Token)
+@app.post("/login")
+@app.post("/api/login")
 def login(user_data: UserAuth, db: Session = Depends(database.get_db)):
     user = db.query(models.User).filter(models.User.email == user_data.email).first()
     if not user or not auth.verify_password(user_data.password, user.password_hash):
@@ -67,12 +81,12 @@ def login(user_data: UserAuth, db: Session = Depends(database.get_db)):
 # --- Income Endpoints ---
 
 @app.post("/add-income")
+@app.post("/api/add-income")
 def add_income(
     income: IncomeCreate, 
     db: Session = Depends(database.get_db), 
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    # Server ki aaj ki auto-date ke sath save hoga
     new_income = models.Income(
         head_name=income.head_name, 
         amount=income.amount, 
@@ -86,6 +100,7 @@ def add_income(
 # --- Expense & Items Endpoints ---
 
 @app.get("/items")
+@app.get("/api/items")
 def get_user_items(
     db: Session = Depends(database.get_db), 
     current_user: models.User = Depends(auth.get_current_user)
@@ -94,12 +109,12 @@ def get_user_items(
     return [item.name for item in items]
 
 @app.post("/add-expense")
+@app.post("/api/add-expense")
 def add_expense(
     expense: ExpenseCreate, 
     db: Session = Depends(database.get_db), 
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    # Check if item exists, else add to dropdown suggestions
     existing_item = db.query(models.Item).filter(
         models.Item.name == expense.item_name, 
         models.Item.user_id == current_user.id
@@ -109,7 +124,6 @@ def add_expense(
         new_item = models.Item(name=expense.item_name, user_id=current_user.id)
         db.add(new_item)
 
-    # Save Expense with Server Auto Date
     new_expense = models.Expense(
         item_name=expense.item_name, 
         amount=expense.amount, 
@@ -123,17 +137,16 @@ def add_expense(
 # --- Filtered Report & Summary Dashboard Endpoint ---
 
 @app.get("/dashboard-summary")
+@app.get("/api/dashboard-summary")
 def get_dashboard_summary(
     start_date: Optional[date] = Query(None, description="Start date for report filter (YYYY-MM-DD)"),
     end_date: Optional[date] = Query(None, description="End date for report filter (YYYY-MM-DD)"),
     db: Session = Depends(database.get_db), 
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    # Initial Queries for current user
     income_query = db.query(models.Income).filter(models.Income.user_id == current_user.id)
     expense_query = db.query(models.Expense).filter(models.Expense.user_id == current_user.id)
 
-    # Date Range Filter Applicator
     if start_date:
         income_query = income_query.filter(models.Income.entry_date >= start_date)
         expense_query = expense_query.filter(models.Expense.entry_date >= start_date)
