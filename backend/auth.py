@@ -1,9 +1,9 @@
 import os
 import hashlib
+import hmac
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
@@ -13,20 +13,23 @@ SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-this-in-production"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 day
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
-def _prepare_password(password: str) -> str:
-    # Hash password with SHA-256 first to guarantee fixed length < 72 bytes for bcrypt
-    return hashlib.sha256(password.encode("utf-8")).hexdigest()
+# Standard PBKDF2 Password Hashing (No bcrypt dependency issue)
+def get_password_hash(password: str) -> str:
+    salt = os.urandom(16)
+    pwd_hash = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
+    return salt.hex() + ":" + pwd_hash.hex()
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    safe_pwd = _prepare_password(plain_password)
-    return pwd_context.verify(safe_pwd, hashed_password)
-
-def get_password_hash(password: str) -> str:
-    safe_pwd = _prepare_password(password)
-    return pwd_context.hash(safe_pwd)
+    try:
+        salt_hex, pwd_hash_hex = hashed_password.split(":")
+        salt = bytes.fromhex(salt_hex)
+        expected_hash = bytes.fromhex(pwd_hash_hex)
+        actual_hash = hashlib.pbkdf2_hmac('sha256', plain_password.encode('utf-8'), salt, 100000)
+        return hmac.compare_digest(actual_hash, expected_hash)
+    except Exception:
+        return False
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
