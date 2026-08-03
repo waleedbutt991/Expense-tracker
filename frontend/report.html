@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filtered Report - Expense Tracker</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn-back { background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; text-decoration: none; font-weight: bold; }
+        .summary-card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-top: 20px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px; }
+        .stat-card { padding: 15px; border-radius: 8px; background: #f8f9fa; text-align: center; }
+        .stat-card.income { border-left: 5px solid #28a745; }
+        .stat-card.expense { border-left: 5px solid #dc3545; }
+        .stat-card.balance { border-left: 5px solid #007bff; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #ddd; }
+        th { background: #f8f9fa; }
+        .badge-income { color: #28a745; font-weight: bold; }
+        .badge-expense { color: #dc3545; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-bar">
+            <h2>📊 Filtered Report</h2>
+            <a href="index.html" class="btn-back">⬅️ Back to Dashboard</a>
+        </div>
+
+        <!-- Date Range Sub-heading -->
+        <p id="reportDateRange" style="color: #666; font-weight: bold;"></p>
+
+        <!-- 1. Head-Wise Grouped Summary -->
+        <div class="card">
+            <h3>🏷️ Head-Wise Summary</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Head / Item Name</th>
+                        <th>Total Amount</th>
+                    </tr>
+                </thead>
+                <tbody id="headwiseTableBody">
+                    <tr><td colspan="3" style="text-align:center;">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 2. Detailed Transactions Table -->
+        <div class="card" style="margin-top: 20px;">
+            <h3>📜 All Filtered Transactions</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Name/Head</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody id="detailedTableBody">
+                    <tr><td colspan="4" style="text-align:center;">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 3. Overall Totals at the End -->
+        <div class="summary-card">
+            <h3>📈 Final Totals for Selected Period</h3>
+            <div class="stats-grid">
+                <div class="stat-card income">
+                    <h4>Filtered Total Income</h4>
+                    <h2 id="filterIncomeRs">Rs. 0.00</h2>
+                </div>
+                <div class="stat-card expense">
+                    <h4>Filtered Total Expense</h4>
+                    <h2 id="filterExpenseRs">Rs. 0.00</h2>
+                </div>
+                <div class="stat-card balance">
+                    <h4>Filtered Net Balance</h4>
+                    <h2 id="filterBalanceRs">Rs. 0.00</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/report.js"></script>
+</body>
+</html>

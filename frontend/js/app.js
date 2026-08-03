@@ -9,16 +9,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
     const API_BASE_URL = isLocal ? "http://127.0.0.1:8000" : "";
 
-    let allIncomes = [];
-    let allExpenses = [];
-
-    // Global Logout Function
     window.logout = function() {
         localStorage.removeItem('token');
         window.location.href = 'login.html';
     };
 
-    // Load Initial Data
     async function fetchDashboardData() {
         try {
             const [incomeRes, expenseRes] = await Promise.all([
@@ -36,76 +31,38 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (incomeRes.ok && expenseRes.ok) {
-                allIncomes = await incomeRes.json();
-                allExpenses = await expenseRes.json();
-                renderDashboard(allIncomes, allExpenses);
+                const incomes = await incomeRes.json();
+                const expenses = await expenseRes.json();
+                
+                const totalIncome = incomes.reduce((sum, item) => sum + item.amount, 0);
+                const totalExpense = expenses.reduce((sum, item) => sum + item.amount, 0);
+                const netBalance = totalIncome - totalExpense;
+
+                document.getElementById('totalIncomeRs').innerText = `Rs. ${totalIncome.toFixed(2)}`;
+                document.getElementById('totalExpenseRs').innerText = `Rs. ${totalExpense.toFixed(2)}`;
+                document.getElementById('netBalanceRs').innerText = `Rs. ${netBalance.toFixed(2)}`;
             }
         } catch (err) {
             console.error("Dashboard Load Error:", err);
         }
     }
 
-    function renderDashboard(incomes, expenses) {
-        // Calculate Totals
-        const totalIncome = incomes.reduce((sum, item) => sum + item.amount, 0);
-        const totalExpense = expenses.reduce((sum, item) => sum + item.amount, 0);
-        const netBalance = totalIncome - totalExpense;
+    // Redirect to report.html on Filter Apply
+    window.applyFilter = function() {
+        const fromDate = document.getElementById('fromDate').value;
+        const toDate = document.getElementById('toDate').value;
 
-        // Update DOM Cards
-        document.getElementById('totalIncomeRs').innerText = `Rs. ${totalIncome.toFixed(2)}`;
-        document.getElementById('totalExpenseRs').innerText = `Rs. ${totalExpense.toFixed(2)}`;
-        document.getElementById('netBalanceRs').innerText = `Rs. ${netBalance.toFixed(2)}`;
-
-        // Merge & Sort Recent Transactions
-        const mergedList = [
-            ...incomes.map(i => ({ type: 'Income', name: i.head_name, amount: i.amount, date: i.created_at })),
-            ...expenses.map(e => ({ type: 'Expense', name: e.item_name, amount: e.amount, date: e.created_at }))
-        ].sort((a, b) => new Date(b.date) - new Date(a.date));
-
-        const tbody = document.getElementById('transactionsTableBody');
-        if (mergedList.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No transactions recorded yet.</td></tr>';
+        if (!fromDate && !toDate) {
+            alert("Please select at least one date to filter!");
             return;
         }
 
-        tbody.innerHTML = mergedList.map(item => `
-            <tr>
-                <td><strong style="color: ${item.type === 'Income' ? '#28a745' : '#dc3545'}">${item.type}</strong></td>
-                <td>${item.name}</td>
-                <td>Rs. ${item.amount.toFixed(2)}</td>
-                <td>${new Date(item.date).toLocaleDateString()}</td>
-            </tr>
-        `).join('');
-    }
-
-    // Filter Logic
-    window.applyFilter = function() {
-        const fromDateStr = document.getElementById('fromDate').value;
-        const toDateStr = document.getElementById('toDate').value;
-
-        if (!fromDateStr && !toDateStr) return;
-
-        const fromDate = fromDateStr ? new Date(fromDateStr) : new Date('1970-01-01');
-        const toDate = toDateStr ? new Date(toDateStr) : new Date('2099-12-31');
-        toDate.setHours(23, 59, 59);
-
-        const filteredIncomes = allIncomes.filter(item => {
-            const d = new Date(item.created_at);
-            return d >= fromDate && d <= toDate;
-        });
-
-        const filteredExpenses = allExpenses.filter(item => {
-            const d = new Date(item.created_at);
-            return d >= fromDate && d <= toDate;
-        });
-
-        renderDashboard(filteredIncomes, filteredExpenses);
+        window.location.href = `report.html?from=${fromDate}&to=${toDate}`;
     };
 
     window.resetFilter = function() {
         document.getElementById('fromDate').value = '';
         document.getElementById('toDate').value = '';
-        renderDashboard(allIncomes, allExpenses);
     };
 
     window.saveIncome = async function(event) {
@@ -133,6 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (response.ok) {
+                alert("Income Saved Successfully!");
                 headInput.value = '';
                 amountInput.value = '';
                 fetchDashboardData();
@@ -169,6 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (response.ok) {
+                alert("Expense Saved Successfully!");
                 itemInput.value = '';
                 amountInput.value = '';
                 fetchDashboardData();

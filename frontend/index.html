@@ -16,20 +16,17 @@
         .stat-card.balance { border-left: 5px solid #007bff; }
         .stat-card h4 { margin: 0 0 5px; color: #666; font-size: 14px; }
         .stat-card h2 { margin: 0; font-size: 22px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #ddd; }
-        th { background: #f8f9fa; }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Top Navigation / Header -->
+        <!-- Top Header -->
         <div class="header-bar">
             <h2>Dashboard</h2>
             <button class="btn-logout" onclick="logout()">Logout 🚪</button>
         </div>
 
-        <!-- Dashboard Summary Top Cards -->
+        <!-- Dashboard Overall Stats -->
         <div class="stats-grid">
             <div class="stat-card income">
                 <h4>Total Income</h4>
@@ -88,24 +85,6 @@
                 <input type="number" id="expenseAmount" placeholder="0.00">
             </div>
             <button class="btn-red" onclick="saveExpense(event)">Save Expense</button>
-        </div>
-
-        <!-- Recent Records Table Section -->
-        <div class="card">
-            <h3>📜 Recent Activity</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Type</th>
-                        <th>Name/Head</th>
-                        <th>Amount</th>
-                        <th>Date</th>
-                    </tr>
-                </thead>
-                <tbody id="transactionsTableBody">
-                    <tr><td colspan="4" style="text-align:center;">Loading...</td></tr>
-                </tbody>
-            </table>
         </div>
     </div>
 
