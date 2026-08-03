@@ -1,4 +1,5 @@
 import os
+import hashlib
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
@@ -15,15 +16,17 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 day
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
+def _prepare_password(password: str) -> str:
+    # Hash password with SHA-256 first to guarantee fixed length < 72 bytes for bcrypt
+    return hashlib.sha256(password.encode("utf-8")).hexdigest()
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    # Truncate to safe byte length to avoid bcrypt limit crash
-    safe_password = plain_password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
-    return pwd_context.verify(safe_password, hashed_password)
+    safe_pwd = _prepare_password(plain_password)
+    return pwd_context.verify(safe_pwd, hashed_password)
 
 def get_password_hash(password: str) -> str:
-    # Truncate to safe byte length to avoid bcrypt limit crash
-    safe_password = password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
-    return pwd_context.hash(safe_password)
+    safe_pwd = _prepare_password(password)
+    return pwd_context.hash(safe_pwd)
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
