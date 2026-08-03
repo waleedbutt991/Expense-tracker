@@ -1,3 +1,9 @@
+import sys
+import os
+
+# Fix Python path for Vercel Serverless environment
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
