@@ -1,107 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard - Expense Tracker</title>
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="manifest" href="manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense & Income Tracker</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <div class="container">
-    
-    <!-- Top Header -->
-    <div class="header-flex">
-      <h3 id="userDisplay">Welcome</h3>
-      <button id="logoutBtn" class="logout-btn">Logout</button>
-    </div>
+    <div class="container">
+        <h2>Dashboard</h2>
 
-    <!-- PWA Install Banner -->
-    <div id="installBanner" class="install-banner">
-      📲 Install App Version on device!
-      <button id="installAppBtn" class="install-btn">Install</button>
-    </div>
-
-    <!-- Summary Balance Grid -->
-    <div class="summary-grid">
-      <div class="summary-card">
-        <p>Total Income</p>
-        <h4 id="totalIncome" class="text-green">Rs. 0</h4>
-      </div>
-      <div class="summary-card">
-        <p>Total Expense</p>
-        <h4 id="totalExpense" class="text-red">Rs. 0</h4>
-      </div>
-      <div class="summary-card">
-        <p>Balance</p>
-        <h4 id="remainingBalance" class="text-blue">Rs. 0</h4>
-      </div>
-    </div>
-
-    <!-- Date Range Filter Report Box -->
-    <div class="card" style="background: #eef2ff;">
-      <h3>📅 Filter Report By Date</h3>
-      <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-        <div style="flex: 1;">
-          <label>From Date</label>
-          <input type="date" id="startDate">
+        <!-- Date Filter Section -->
+        <div class="card">
+            <h3>📅 Filter Report By Date</h3>
+            <div class="form-group-inline">
+                <div>
+                    <label>From Date</label>
+                    <input type="date" id="fromDate">
+                </div>
+                <div>
+                    <label>To Date</label>
+                    <input type="date" id="toDate">
+                </div>
+            </div>
+            <button class="btn-primary" onclick="applyFilter()">Apply Filter</button>
+            <button class="btn-secondary" onclick="resetFilter()">Reset</button>
         </div>
-        <div style="flex: 1;">
-          <label>To Date</label>
-          <input type="date" id="endDate">
+
+        <!-- Add Income Section -->
+        <div class="card">
+            <h3>➕ Add Income</h3>
+            <div class="form-group">
+                <label>Source / Head Name</label>
+                <input type="text" id="incomeHead" placeholder="salary">
+            </div>
+            <div class="form-group">
+                <label>Amount (Rs.)</label>
+                <input type="number" id="incomeAmount" placeholder="5000">
+            </div>
+            <button class="btn-green" onclick="saveIncome(event)">Save Income</button>
         </div>
-      </div>
-      <div style="display: flex; gap: 10px;">
-        <button id="applyFilterBtn" class="btn" style="background: #4f46e5;">Apply Filter</button>
-        <button id="resetFilterBtn" class="btn" style="background: #6b7280;">Reset</button>
-      </div>
+
+        <!-- Add Expense Section -->
+        <div class="card">
+            <h3>➖ Add Expense</h3>
+            <div class="form-group">
+                <label>Item Name (Auto-Suggests Saved Items)</label>
+                <input type="text" id="expenseItem" placeholder="Type item e.g. Milk, Ration">
+            </div>
+            <div class="form-group">
+                <label>Amount (Rs.)</label>
+                <input type="number" id="expenseAmount" placeholder="0.00">
+            </div>
+            <button class="btn-red" onclick="saveExpense(event)">Save Expense</button>
+        </div>
     </div>
 
-    <!-- Income Entry Form -->
-    <div class="card">
-      <h3>➕ Add Income</h3>
-      <form id="incomeForm">
-        <div class="form-group">
-          <label>Source / Head Name</label>
-          <input type="text" id="incomeHead" placeholder="e.g. Salary, Husband, Shop" required>
-        </div>
-        <div class="form-group">
-          <label>Amount (Rs.)</label>
-          <input type="number" id="incomeAmount" placeholder="0.00" required>
-        </div>
-        <button type="submit" class="btn" style="background: #10b981;">Save Income</button>
-      </form>
-    </div>
-
-    <!-- Expense Entry Form with Auto-Suggest Dropdown -->
-    <div class="card">
-      <h3>➖ Add Expense</h3>
-      <form id="expenseForm">
-        <div class="form-group">
-          <label>Item Name (Auto-Suggests Saved Items)</label>
-          <input type="text" id="expenseItem" list="itemsDatalist" placeholder="Type item e.g. Milk, Ration" required autocomplete="off">
-          <!-- Datalist for Dropdown Suggestions -->
-          <datalist id="itemsDatalist"></datalist>
-        </div>
-        <div class="form-group">
-          <label>Amount (Rs.)</label>
-          <input type="number" id="expenseAmount" placeholder="0.00" required>
-        </div>
-        <button type="submit" class="btn" style="background: #ef4444;">Save Expense</button>
-      </form>
-    </div>
-
-    <!-- Transactions History / Report Lists -->
-    <div class="card">
-      <h3>📋 Filtered Transactions History</h3>
-      <div id="historyList">
-        <p style="text-align: center; color: #6b7280;">Loading records...</p>
-      </div>
-    </div>
-
-  </div>
-
-  <script src="js/app.js"></script>
-  <script src="js/pwa.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>

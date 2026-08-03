@@ -1,13 +1,9 @@
-import sys
-import os
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-from fastapi import FastAPI, Depends, HTTPException, status, Query
+from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List
 from pydantic import BaseModel
-from datetime import date, datetime
+from datetime import datetime
 
 import database, models, auth
 
@@ -101,8 +97,9 @@ def login(user_data: UserAuth, db: Session = Depends(database.get_db)):
     access_token = auth.create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
 
-# --- Income & Expense Endpoints ---
+# --- Income Endpoints ---
 
+@app.post("/incomes", response_model=IncomeResponse)
 @app.post("/api/incomes", response_model=IncomeResponse)
 def create_income(income: IncomeCreate, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
     db_income = models.Income(head_name=income.head_name, amount=income.amount, user_id=current_user.id)
@@ -111,10 +108,14 @@ def create_income(income: IncomeCreate, current_user: models.User = Depends(auth
     db.refresh(db_income)
     return db_income
 
+@app.get("/incomes", response_model=List[IncomeResponse])
 @app.get("/api/incomes", response_model=List[IncomeResponse])
 def get_incomes(current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
     return db.query(models.Income).filter(models.Income.user_id == current_user.id).all()
 
+# --- Expense Endpoints ---
+
+@app.post("/expenses", response_model=ExpenseResponse)
 @app.post("/api/expenses", response_model=ExpenseResponse)
 def create_expense(expense: ExpenseCreate, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
     db_expense = models.Expense(item_name=expense.item_name, amount=expense.amount, user_id=current_user.id)
@@ -123,6 +124,7 @@ def create_expense(expense: ExpenseCreate, current_user: models.User = Depends(a
     db.refresh(db_expense)
     return db_expense
 
+@app.get("/expenses", response_model=List[ExpenseResponse])
 @app.get("/api/expenses", response_model=List[ExpenseResponse])
 def get_expenses(current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
     return db.query(models.Expense).filter(models.Expense.user_id == current_user.id).all()
