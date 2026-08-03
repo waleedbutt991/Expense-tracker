@@ -9,7 +9,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
     const API_BASE_URL = isLocal ? "http://127.0.0.1:8000" : "";
 
-    // Load and Display Totals & Table Rows
+    let allIncomes = [];
+    let allExpenses = [];
+
+    // Global Logout Function
+    window.logout = function() {
+        localStorage.removeItem('token');
+        window.location.href = 'login.html';
+    };
+
+    // Load Initial Data
     async function fetchDashboardData() {
         try {
             const [incomeRes, expenseRes] = await Promise.all([
@@ -22,16 +31,14 @@ document.addEventListener('DOMContentLoaded', () => {
             ]);
 
             if (incomeRes.status === 401 || expenseRes.status === 401) {
-                localStorage.removeItem('token');
-                window.location.href = 'login.html';
+                logout();
                 return;
             }
 
             if (incomeRes.ok && expenseRes.ok) {
-                const incomes = await incomeRes.json();
-                const expenses = await expenseRes.json();
-                
-                renderDashboard(incomes, expenses);
+                allIncomes = await incomeRes.json();
+                allExpenses = await expenseRes.json();
+                renderDashboard(allIncomes, allExpenses);
             }
         } catch (err) {
             console.error("Dashboard Load Error:", err);
@@ -70,6 +77,36 @@ document.addEventListener('DOMContentLoaded', () => {
             </tr>
         `).join('');
     }
+
+    // Filter Logic
+    window.applyFilter = function() {
+        const fromDateStr = document.getElementById('fromDate').value;
+        const toDateStr = document.getElementById('toDate').value;
+
+        if (!fromDateStr && !toDateStr) return;
+
+        const fromDate = fromDateStr ? new Date(fromDateStr) : new Date('1970-01-01');
+        const toDate = toDateStr ? new Date(toDateStr) : new Date('2099-12-31');
+        toDate.setHours(23, 59, 59);
+
+        const filteredIncomes = allIncomes.filter(item => {
+            const d = new Date(item.created_at);
+            return d >= fromDate && d <= toDate;
+        });
+
+        const filteredExpenses = allExpenses.filter(item => {
+            const d = new Date(item.created_at);
+            return d >= fromDate && d <= toDate;
+        });
+
+        renderDashboard(filteredIncomes, filteredExpenses);
+    };
+
+    window.resetFilter = function() {
+        document.getElementById('fromDate').value = '';
+        document.getElementById('toDate').value = '';
+        renderDashboard(allIncomes, allExpenses);
+    };
 
     window.saveIncome = async function(event) {
         if (event) event.preventDefault();

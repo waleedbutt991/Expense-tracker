@@ -6,6 +6,9 @@
     <title>Expense & Income Tracker</title>
     <link rel="stylesheet" href="css/style.css">
     <style>
+        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn-logout { background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-logout:hover { background: #bd2130; }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .stat-card { padding: 15px; border-radius: 8px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; }
         .stat-card.income { border-left: 5px solid #28a745; }
@@ -20,7 +23,11 @@
 </head>
 <body>
     <div class="container">
-        <h2>Dashboard</h2>
+        <!-- Top Navigation / Header -->
+        <div class="header-bar">
+            <h2>Dashboard</h2>
+            <button class="btn-logout" onclick="logout()">Logout 🚪</button>
+        </div>
 
         <!-- Dashboard Summary Top Cards -->
         <div class="stats-grid">
