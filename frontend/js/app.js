@@ -34,6 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const expenses = await expenseRes.json();
                 console.log("Fetched Incomes:", incomes);
                 console.log("Fetched Expenses:", expenses);
+            } else {
+                console.warn("Failed to fetch dashboard data. Status:", incomeRes.status, expenseRes.status);
             }
         } catch (err) {
             console.error("Dashboard Load Error:", err);
@@ -74,8 +76,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 amountInput.value = '';
                 fetchDashboardData();
             } else {
-                const err = await response.json();
-                alert("Error: " + (err.detail || "Could not save income"));
+                let errorMsg = "Could not save income";
+                try {
+                    // Safe JSON parsing to prevent "Unexpected token 'A'" crash
+                    const err = await response.json();
+                    errorMsg = err.detail || errorMsg;
+                } catch(e) {
+                    errorMsg = `Server Error (${response.status}). Check Vercel Logs.`;
+                }
+                alert("Error: " + errorMsg);
             }
         } catch (e) {
             console.error("Save Income Error:", e);
@@ -117,8 +126,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 amountInput.value = '';
                 fetchDashboardData();
             } else {
-                const err = await response.json();
-                alert("Error: " + (err.detail || "Could not save expense"));
+                let errorMsg = "Could not save expense";
+                try {
+                    // Safe JSON parsing to prevent "Unexpected token 'A'" crash
+                    const err = await response.json();
+                    errorMsg = err.detail || errorMsg;
+                } catch(e) {
+                    errorMsg = `Server Error (${response.status}). Check Vercel Logs.`;
+                }
+                alert("Error: " + errorMsg);
             }
         } catch (e) {
             console.error("Save Expense Error:", e);
