@@ -1,6 +1,3 @@
-const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
-const API_BASE_URL = isLocal ? "http://127.0.0.1:8000" : "";
-
 let isLoginMode = true;
 
 const authForm = document.getElementById('authForm');
@@ -33,11 +30,12 @@ if (authForm) {
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
 
-    // Localhost aur Vercel Production dono ke liye correct endpoint logic
+    // Detect Host Environment
+    const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
+    
+    // Construct dynamic path safe for both Vercel Rewrites and Local Uvicorn
     const endpoint = isLoginMode ? '/login' : '/signup';
-    const targetUrl = isLocal 
-      ? `${API_BASE_URL}${endpoint}` 
-      : `/api${endpoint}`;
+    const targetUrl = isLocal ? `http://127.0.0.1:8000${endpoint}` : `/api${endpoint}`;
 
     try {
       const response = await fetch(targetUrl, {
@@ -54,15 +52,12 @@ if (authForm) {
         localStorage.setItem('token', data.access_token);
         window.location.href = 'index.html';
       } else {
-        if (Array.isArray(data.detail)) {
-          alert(data.detail[0].msg || "Invalid Input");
-        } else {
-          alert(data.detail || "Authentication Failed");
-        }
+        const errorMsg = Array.isArray(data.detail) ? data.detail[0].msg : (data.detail || "Authentication Failed");
+        alert(errorMsg);
       }
     } catch (err) {
-      console.error("Fetch Error:", err);
-      alert("Network Error: Ensure backend terminal is running and email format is valid.");
+      console.error("Fetch Exception Details:", err);
+      alert(`Connection Error (${err.message}). Vercel function may be initializing or URL invalid.`);
     }
   });
 }

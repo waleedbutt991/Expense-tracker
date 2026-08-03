@@ -16,12 +16,12 @@
       "dest": "backend/main.py"
     },
     {
-      "src": "/login",
-      "dest": "frontend/login.html"
+      "src": "/signup",
+      "dest": "backend/main.py"
     },
     {
-      "src": "/",
-      "dest": "frontend/login.html"
+      "src": "/login",
+      "dest": "backend/main.py"
     },
     {
       "src": "/(.*)",
