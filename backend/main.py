@@ -39,16 +39,32 @@ class IncomeCreate(BaseModel):
     head_name: str
     amount: float
 
+class IncomeResponse(BaseModel):
+    id: int
+    head_name: str
+    amount: float
+    created_at: datetime
+    class Config:
+        orm_mode = True
+
 class ExpenseCreate(BaseModel):
     item_name: str
     amount: float
 
-# --- Endpoints (Supporting both /api/ dynamic routes) ---
+class ExpenseResponse(BaseModel):
+    id: int
+    item_name: str
+    amount: float
+    created_at: datetime
+    class Config:
+        orm_mode = True
+
+# --- Root & Auth Endpoints ---
 
 @app.get("/")
 @app.get("/api")
 def root():
-    return {"status": "ok"}
+    return {"status": "ok", "message": "Expense Tracker API is Running"}
 
 @app.post("/signup")
 @app.post("/api/signup", response_model=Token)
@@ -67,6 +83,8 @@ def signup(user_data: UserAuth, db: Session = Depends(database.get_db)):
         access_token = auth.create_access_token(data={"sub": new_user.email})
         return {"access_token": access_token, "token_type": "bearer"}
     except Exception as e:
+        if isinstance(e, HTTPException):
+            raise e
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/login")
@@ -78,3 +96,29 @@ def login(user_data: UserAuth, db: Session = Depends(database.get_db)):
 
     access_token = auth.create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
+
+# --- Income & Expense Endpoints ---
+
+@app.post("/api/incomes", response_model=IncomeResponse)
+def create_income(income: IncomeCreate, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    db_income = models.Income(head_name=income.head_name, amount=income.amount, user_id=current_user.id)
+    db.add(db_income)
+    db.commit()
+    db.refresh(db_income)
+    return db_income
+
+@app.get("/api/incomes", response_model=List[IncomeResponse])
+def get_incomes(current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    return db.query(models.Income).filter(models.Income.user_id == current_user.id).all()
+
+@app.post("/api/expenses", response_model=ExpenseResponse)
+def create_expense(expense: ExpenseCreate, current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    db_expense = models.Expense(item_name=expense.item_name, amount=expense.amount, user_id=current_user.id)
+    db.add(db_expense)
+    db.commit()
+    db.refresh(db_expense)
+    return db_expense
+
+@app.get("/api/expenses", response_model=List[ExpenseResponse])
+def get_expenses(current_user: models.User = Depends(auth.get_current_user), db: Session = Depends(database.get_db)):
+    return db.query(models.Expense).filter(models.Expense.user_id == current_user.id).all()
