@@ -1,164 +1,101 @@
-const API_URL = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost" 
-  ? "http://127.0.0.1:8000" 
-  : "/api";
+// Auth token check
 const token = localStorage.getItem('token');
-
-// Redirect to Login if token is missing
 if (!token) {
-  window.location.href = 'login.html';
+    window.location.href = 'login.html';
 }
 
-// Global Auth Header
-const headers = {
-  'Content-Type': 'application/json',
-  'Authorization': `Bearer ${token}`
-};
+// Dynamic Base API URL Detection
+const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
+const API_BASE_URL = isLocal ? "http://127.0.0.1:8000" : "";
 
-// Initial Load
-document.addEventListener('DOMContentLoaded', () => {
-  fetchDashboardSummary();
-  fetchAutoSuggestItems();
-});
-
-// Logout Handler
-document.getElementById('logoutBtn').addEventListener('click', () => {
-  localStorage.removeItem('token');
-  window.location.href = 'login.html';
-});
-
-// Fetch Dashboard & Summary (With Optional Date Filters)
-async function fetchDashboardSummary(startDate = '', endDate = '') {
-  let url = `${API_URL}/dashboard-summary`;
-  const params = new URLSearchParams();
-  
-  if (startDate) params.append('start_date', startDate);
-  if (endDate) params.append('end_date', endDate);
-  
-  if (params.toString()) {
-    url += `?${params.toString()}`;
-  }
-
-  try {
-    const res = await fetch(url, { headers });
-    if (res.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = 'login.html';
-      return;
-    }
-    const data = await res.json();
-
-    // Update Header & Cards
-    document.getElementById('userDisplay').innerText = `User: ${data.user_email.split('@')[0]}`;
-    document.getElementById('totalIncome').innerText = `Rs. ${data.total_income.toLocaleString()}`;
-    document.getElementById('totalExpense').innerText = `Rs. ${data.total_expense.toLocaleString()}`;
-    document.getElementById('remainingBalance').innerText = `Rs. ${data.remaining_balance.toLocaleString()}`;
-
-    // Render History
-    renderHistory(data.incomes_list, data.expenses_list);
-  } catch (err) {
-    console.error("Error fetching summary:", err);
-  }
-}
-
-// Fetch Items for Dropdown Auto-Suggest
-async function fetchAutoSuggestItems() {
-  try {
-    const res = await fetch(`${API_URL}/items`, { headers });
-    const items = await res.json();
-    const datalist = document.getElementById('itemsDatalist');
-    datalist.innerHTML = '';
+// Save Income Function
+async function saveIncome(event) {
+    if (event) event.preventDefault();
     
-    items.forEach(item => {
-      const option = document.createElement('option');
-      option.value = item;
-      datalist.appendChild(option);
-    });
-  } catch (err) {
-    console.error("Error fetching items:", err);
-  }
+    const headName = document.getElementById('incomeHead') ? document.getElementById('incomeHead').value : '';
+    const amount = document.getElementById('incomeAmount') ? document.getElementById('incomeAmount').value : '';
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/incomes`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                head_name: headName,
+                amount: parseFloat(amount)
+            })
+        });
+
+        if (response.ok) {
+            alert('Income saved successfully!');
+            loadDashboardData(); // Dashboard UI updates
+        } else {
+            const err = await response.json();
+            alert(err.detail || 'Failed to save income');
+        }
+    } catch (error) {
+        console.error('Error saving income:', error);
+        alert('Connection error while saving income.');
+    }
 }
 
-// Render History
-function renderHistory(incomes, expenses) {
-  const historyList = document.getElementById('historyList');
-  historyList.innerHTML = '';
+// Save Expense Function
+async function saveExpense(event) {
+    if (event) event.preventDefault();
+    
+    const itemName = document.getElementById('expenseItem') ? document.getElementById('expenseItem').value : '';
+    const amount = document.getElementById('expenseAmount') ? document.getElementById('expenseAmount').value : '';
 
-  const allRecords = [
-    ...incomes.map(i => ({ ...i, type: 'income', title: i.head })),
-    ...expenses.map(e => ({ ...e, type: 'expense', title: e.item }))
-  ];
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/expenses`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                item_name: itemName,
+                amount: parseFloat(amount)
+            })
+        });
 
-  // Sort by date descending
-  allRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  if (allRecords.length === 0) {
-    historyList.innerHTML = `<p style="text-align: center; color: #6b7280;">No records found for selected period.</p>`;
-    return;
-  }
-
-  allRecords.forEach(record => {
-    const div = document.createElement('div');
-    div.className = 'record-item';
-    const isIncome = record.type === 'income';
-    div.innerHTML = `
-      <div>
-        <strong>${record.title}</strong>
-        <br><small style="color:#6b7280;">${record.date}</small>
-      </div>
-      <div style="font-weight: bold;" class="${isIncome ? 'text-green' : 'text-red'}">
-        ${isIncome ? '+' : '-'} Rs. ${record.amount.toLocaleString()}
-      </div>
-    `;
-    historyList.appendChild(div);
-  });
+        if (response.ok) {
+            alert('Expense saved successfully!');
+            loadDashboardData(); // Dashboard UI updates
+        } else {
+            const err = await response.json();
+            alert(err.detail || 'Failed to save expense');
+        }
+    } catch (error) {
+        console.error('Error saving expense:', error);
+        alert('Connection error while saving expense.');
+    }
 }
 
-// Save Income
-document.getElementById('incomeForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const head_name = document.getElementById('incomeHead').value;
-  const amount = parseFloat(document.getElementById('incomeAmount').value);
+// Initial Data Load on Page Ready
+async function loadDashboardData() {
+    try {
+        const [incRes, expRes] = await Promise.all([
+            fetch(`${API_BASE_URL}/api/incomes`, { headers: { 'Authorization': `Bearer ${token}` } }),
+            fetch(`${API_BASE_URL}/api/expenses`, { headers: { 'Authorization': `Bearer ${token}` } })
+        ]);
 
-  const res = await fetch(`${API_URL}/add-income`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ head_name, amount })
-  });
+        if (incRes.ok && expRes.ok) {
+            const incomes = await incRes.json();
+            const expenses = await expRes.json();
+            
+            // Calculate and display totals on dashboard UI
+            console.log("Fetched Incomes:", incomes);
+            console.log("Fetched Expenses:", expenses);
+            
+            // Yahan aap apne UI elements update kar sakte hain
+        }
+    } catch (err) {
+        console.error("Dashboard fetch error:", err);
+    }
+}
 
-  if (res.ok) {
-    document.getElementById('incomeForm').reset();
-    fetchDashboardSummary();
-  }
-});
-
-// Save Expense
-document.getElementById('expenseForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const item_name = document.getElementById('expenseItem').value;
-  const amount = parseFloat(document.getElementById('expenseAmount').value);
-
-  const res = await fetch(`${API_URL}/add-expense`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ item_name, amount })
-  });
-
-  if (res.ok) {
-    document.getElementById('expenseForm').reset();
-    fetchDashboardSummary();
-    fetchAutoSuggestItems(); // Refresh auto-suggestions
-  }
-});
-
-// Filter Buttons Handler
-document.getElementById('applyFilterBtn').addEventListener('click', () => {
-  const start = document.getElementById('startDate').value;
-  const end = document.getElementById('endDate').value;
-  fetchDashboardSummary(start, end);
-});
-
-document.getElementById('resetFilterBtn').addEventListener('click', () => {
-  document.getElementById('startDate').value = '';
-  document.getElementById('endDate').value = '';
-  fetchDashboardSummary();
-});
+// Initial call
+loadDashboardData();
