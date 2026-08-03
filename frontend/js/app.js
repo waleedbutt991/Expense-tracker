@@ -1,17 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
 
-    // Auth Guard: Token check
     if (!token) {
         window.location.href = 'login.html';
         return;
     }
 
-    // Dynamic Base API URL Detection
     const isLocal = window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost";
     const API_BASE_URL = isLocal ? "http://127.0.0.1:8000" : "";
 
-    // Fetch and Load Initial Dashboard Data
+    // Load and Display Totals & Table Rows
     async function fetchDashboardData() {
         try {
             const [incomeRes, expenseRes] = await Promise.all([
@@ -32,17 +30,47 @@ document.addEventListener('DOMContentLoaded', () => {
             if (incomeRes.ok && expenseRes.ok) {
                 const incomes = await incomeRes.json();
                 const expenses = await expenseRes.json();
-                console.log("Fetched Incomes:", incomes);
-                console.log("Fetched Expenses:", expenses);
-            } else {
-                console.warn("Failed to fetch dashboard data. Status:", incomeRes.status, expenseRes.status);
+                
+                renderDashboard(incomes, expenses);
             }
         } catch (err) {
             console.error("Dashboard Load Error:", err);
         }
     }
 
-    // Global Save Income Function
+    function renderDashboard(incomes, expenses) {
+        // Calculate Totals
+        const totalIncome = incomes.reduce((sum, item) => sum + item.amount, 0);
+        const totalExpense = expenses.reduce((sum, item) => sum + item.amount, 0);
+        const netBalance = totalIncome - totalExpense;
+
+        // Update DOM Cards
+        document.getElementById('totalIncomeRs').innerText = `Rs. ${totalIncome.toFixed(2)}`;
+        document.getElementById('totalExpenseRs').innerText = `Rs. ${totalExpense.toFixed(2)}`;
+        document.getElementById('netBalanceRs').innerText = `Rs. ${netBalance.toFixed(2)}`;
+
+        // Merge & Sort Recent Transactions
+        const mergedList = [
+            ...incomes.map(i => ({ type: 'Income', name: i.head_name, amount: i.amount, date: i.created_at })),
+            ...expenses.map(e => ({ type: 'Expense', name: e.item_name, amount: e.amount, date: e.created_at }))
+        ].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        const tbody = document.getElementById('transactionsTableBody');
+        if (mergedList.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No transactions recorded yet.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = mergedList.map(item => `
+            <tr>
+                <td><strong style="color: ${item.type === 'Income' ? '#28a745' : '#dc3545'}">${item.type}</strong></td>
+                <td>${item.name}</td>
+                <td>Rs. ${item.amount.toFixed(2)}</td>
+                <td>${new Date(item.date).toLocaleDateString()}</td>
+            </tr>
+        `).join('');
+    }
+
     window.saveIncome = async function(event) {
         if (event) event.preventDefault();
 
@@ -64,35 +92,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({
-                    head_name: headName,
-                    amount: amount
-                })
+                body: JSON.stringify({ head_name: headName, amount: amount })
             });
 
             if (response.ok) {
-                alert("Income Saved Successfully!");
                 headInput.value = '';
                 amountInput.value = '';
                 fetchDashboardData();
             } else {
-                let errorMsg = "Could not save income";
-                try {
-                    // Safe JSON parsing to prevent "Unexpected token 'A'" crash
-                    const err = await response.json();
-                    errorMsg = err.detail || errorMsg;
-                } catch(e) {
-                    errorMsg = `Server Error (${response.status}). Check Vercel Logs.`;
-                }
-                alert("Error: " + errorMsg);
+                alert("Error saving income!");
             }
         } catch (e) {
             console.error("Save Income Error:", e);
-            alert("Connection error while saving income.");
         }
     };
 
-    // Global Save Expense Function
     window.saveExpense = async function(event) {
         if (event) event.preventDefault();
 
@@ -114,34 +128,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({
-                    item_name: itemName,
-                    amount: amount
-                })
+                body: JSON.stringify({ item_name: itemName, amount: amount })
             });
 
             if (response.ok) {
-                alert("Expense Saved Successfully!");
                 itemInput.value = '';
                 amountInput.value = '';
                 fetchDashboardData();
             } else {
-                let errorMsg = "Could not save expense";
-                try {
-                    // Safe JSON parsing to prevent "Unexpected token 'A'" crash
-                    const err = await response.json();
-                    errorMsg = err.detail || errorMsg;
-                } catch(e) {
-                    errorMsg = `Server Error (${response.status}). Check Vercel Logs.`;
-                }
-                alert("Error: " + errorMsg);
+                alert("Error saving expense!");
             }
         } catch (e) {
             console.error("Save Expense Error:", e);
-            alert("Connection error while saving expense.");
         }
     };
 
-    // Initial Fetch on Startup
     fetchDashboardData();
 });

@@ -5,10 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Expense & Income Tracker</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .stat-card { padding: 15px; border-radius: 8px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; }
+        .stat-card.income { border-left: 5px solid #28a745; }
+        .stat-card.expense { border-left: 5px solid #dc3545; }
+        .stat-card.balance { border-left: 5px solid #007bff; }
+        .stat-card h4 { margin: 0 0 5px; color: #666; font-size: 14px; }
+        .stat-card h2 { margin: 0; font-size: 22px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #ddd; }
+        th { background: #f8f9fa; }
+    </style>
 </head>
 <body>
     <div class="container">
         <h2>Dashboard</h2>
+
+        <!-- Dashboard Summary Top Cards -->
+        <div class="stats-grid">
+            <div class="stat-card income">
+                <h4>Total Income</h4>
+                <h2 id="totalIncomeRs">Rs. 0.00</h2>
+            </div>
+            <div class="stat-card expense">
+                <h4>Total Expense</h4>
+                <h2 id="totalExpenseRs">Rs. 0.00</h2>
+            </div>
+            <div class="stat-card balance">
+                <h4>Net Balance</h4>
+                <h2 id="netBalanceRs">Rs. 0.00</h2>
+            </div>
+        </div>
 
         <!-- Date Filter Section -->
         <div class="card">
@@ -53,6 +81,24 @@
                 <input type="number" id="expenseAmount" placeholder="0.00">
             </div>
             <button class="btn-red" onclick="saveExpense(event)">Save Expense</button>
+        </div>
+
+        <!-- Recent Records Table Section -->
+        <div class="card">
+            <h3>📜 Recent Activity</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Name/Head</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody id="transactionsTableBody">
+                    <tr><td colspan="4" style="text-align:center;">Loading...</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
