@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
@@ -7,20 +8,20 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 import database, models
 
-SECRET_KEY = "SUPER_SECRET_KEY_CHANGE_THIS_IN_PRODUCTION"
+SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-this-in-production")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 Days
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 day
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    # 72 bytes safety truncate
+    # Truncate to safe byte length to avoid bcrypt limit crash
     safe_password = plain_password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
     return pwd_context.verify(safe_password, hashed_password)
 
 def get_password_hash(password: str) -> str:
-    # 72 bytes safety truncate for Bcrypt
+    # Truncate to safe byte length to avoid bcrypt limit crash
     safe_password = password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
     return pwd_context.hash(safe_password)
 
