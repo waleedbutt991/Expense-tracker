@@ -1,6 +1,7 @@
+psycopg2-binary
 fastapi
 uvicorn
 sqlalchemy
-psycopg2-binary
-python-jose[cryptography]
 pydantic
+python-jose
+passlib
