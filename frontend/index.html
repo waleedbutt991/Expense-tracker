@@ -7,8 +7,9 @@
     <link rel="stylesheet" href="css/style.css">
     <style>
         .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .nav-links { display: flex; gap: 10px; }
+        .btn-nav { background: #007bff; color: white; padding: 8px 12px; border-radius: 5px; text-decoration: none; font-weight: bold; }
         .btn-logout { background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .btn-logout:hover { background: #bd2130; }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .stat-card { padding: 15px; border-radius: 8px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; }
         .stat-card.income { border-left: 5px solid #28a745; }
@@ -16,17 +17,21 @@
         .stat-card.balance { border-left: 5px solid #007bff; }
         .stat-card h4 { margin: 0 0 5px; color: #666; font-size: 14px; }
         .stat-card h2 { margin: 0; font-size: 22px; }
+        .mode-select { padding: 8px; border-radius: 4px; border: 1px solid #ccc; width: 100%; margin-top: 5px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Top Header -->
+        <!-- Header & Nav -->
         <div class="header-bar">
             <h2>Dashboard</h2>
-            <button class="btn-logout" onclick="logout()">Logout 🚪</button>
+            <div class="nav-links">
+                <a href="loans.html" class="btn-nav">🤝 Loan Ledger Manager</a>
+                <button class="btn-logout" onclick="logout()">Logout 🚪</button>
+            </div>
         </div>
 
-        <!-- Dashboard Overall Stats -->
+        <!-- Dashboard Stats -->
         <div class="stats-grid">
             <div class="stat-card income">
                 <h4>Total Income</h4>
@@ -42,7 +47,7 @@
             </div>
         </div>
 
-        <!-- Date Filter Section -->
+        <!-- Date Filter -->
         <div class="card">
             <h3>📅 Filter Report By Date</h3>
             <div class="form-group-inline">
@@ -59,30 +64,46 @@
             <button class="btn-secondary" onclick="resetFilter()">Reset</button>
         </div>
 
-        <!-- Add Income Section -->
+        <!-- Add Income -->
         <div class="card">
             <h3>➕ Add Income</h3>
             <div class="form-group">
                 <label>Source / Head Name</label>
-                <input type="text" id="incomeHead" placeholder="salary">
+                <input type="text" id="incomeHead" list="incomeSuggestions" placeholder="salary / freelance">
+                <datalist id="incomeSuggestions"></datalist>
             </div>
             <div class="form-group">
                 <label>Amount (Rs.)</label>
                 <input type="number" id="incomeAmount" placeholder="5000">
             </div>
+            <div class="form-group">
+                <label>Payment Mode</label>
+                <select id="incomeMode" class="mode-select">
+                    <option value="cash">Cash (Received)</option>
+                    <option value="credit">Credit / Receivables (Udhar Received Later)</option>
+                </select>
+            </div>
             <button class="btn-green" onclick="saveIncome(event)">Save Income</button>
         </div>
 
-        <!-- Add Expense Section -->
+        <!-- Add Expense -->
         <div class="card">
             <h3>➖ Add Expense</h3>
             <div class="form-group">
-                <label>Item Name (Auto-Suggests Saved Items)</label>
-                <input type="text" id="expenseItem" placeholder="Type item e.g. Milk, Ration">
+                <label>Item Name</label>
+                <input type="text" id="expenseItem" list="expenseSuggestions" placeholder="Milk, Car, Ration">
+                <datalist id="expenseSuggestions"></datalist>
             </div>
             <div class="form-group">
                 <label>Amount (Rs.)</label>
                 <input type="number" id="expenseAmount" placeholder="0.00">
+            </div>
+            <div class="form-group">
+                <label>Payment Mode</label>
+                <select id="expenseMode" class="mode-select">
+                    <option value="cash">Cash (Paid)</option>
+                    <option value="credit">Credit / Udhar (Pay Later)</option>
+                </select>
             </div>
             <button class="btn-red" onclick="saveExpense(event)">Save Expense</button>
         </div>
